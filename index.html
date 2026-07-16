@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>البيت الذكي</title>
+<title>Smart Home</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
   :root{
@@ -26,7 +26,7 @@
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   body{
-    font-family:'IBM Plex Sans Arabic', system-ui, sans-serif;
+    font-family:'Inter', system-ui, sans-serif;
     background: radial-gradient(ellipse 900px 600px at 50% 0%, var(--night-2), var(--night) 65%);
     color:var(--text);
     min-height:100vh;
@@ -169,7 +169,7 @@
   .back-btn{
     display:inline-flex; align-items:center; gap:8px;
     background:none; border:1px solid var(--line); color:var(--text-dim);
-    font-family:'IBM Plex Sans Arabic', sans-serif; font-size:13px;
+    font-family:'Inter', sans-serif; font-size:13px;
     padding:9px 16px; border-radius:999px; cursor:pointer;
     transition: border-color .2s, color .2s;
     margin-bottom:26px;
@@ -200,7 +200,7 @@
     display:flex; flex-direction:column; align-items:flex-start; gap:14px;
     cursor:pointer;
     transition: border-color .3s, background .3s, transform .12s;
-    text-align:right;
+    text-align:left;
   }
   .device-card:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,0.16); }
   .device-card:active{ transform: scale(0.985); }
@@ -244,14 +244,14 @@
 <body>
 
 <div class="topbar">
-  <div class="brand"><span class="brand-dot"></span> البيت الذكي</div>
+  <div class="brand"><span class="brand-dot"></span> Smart Home</div>
   <div class="topbar-right">
     <div class="summary" id="summary">
       <span class="summary-dot" id="summaryDot"></span>
-      <span id="summaryText">بيتأكد...</span>
+      <span id="summaryText">Checking...</span>
     </div>
     <div class="vline"></div>
-    <div class="conn"><span class="dot" id="connDot"></span><span id="connText">بيتصل...</span></div>
+    <div class="conn"><span class="dot" id="connDot"></span><span id="connText">Connecting...</span></div>
   </div>
 </div>
 
@@ -268,53 +268,53 @@ const BASE_TOPIC = `home/${UNIQUE_ID}`;
 
 // pinX/pinY are percentages measured from the top-left of floorplan.png
 const ROOMS = [
-  { id:"main-entry", name:"المدخل الرئيسي", pinX:56.1, pinY:20.4, devices:[
-    { id:"lamp",   name:"لمبة المدخل", icon:"bulb" },
-    { id:"lock",   name:"قفل الباب",   icon:"lock" },
-    { id:"bell",   name:"جرس الباب",   icon:"bell" },
-    { id:"motion", name:"لمبة الحركة", icon:"moon" },
+  { id:"main-entry", name:"Main Entry", pinX:56.1, pinY:20.4, devices:[
+    { id:"lamp",   name:"Entrance Lamp", icon:"bulb" },
+    { id:"lock",   name:"Door Lock",     icon:"lock" },
+    { id:"bell",   name:"Doorbell",      icon:"bell" },
+    { id:"motion", name:"Motion Light",  icon:"moon" },
   ]},
-  { id:"reception", name:"الاستقبال", pinX:37.1, pinY:32.8, devices:[
-    { id:"light", name:"الإضاءة الرئيسية", icon:"bulb" },
-    { id:"lamp",  name:"لمبة القراءة",     icon:"bulb" },
-    { id:"ac",    name:"التكييف",          icon:"snow" },
-    { id:"tv",    name:"التلفزيون",         icon:"tv" },
+  { id:"reception", name:"Reception", pinX:37.1, pinY:32.8, devices:[
+    { id:"light", name:"Main Light",  icon:"bulb" },
+    { id:"lamp",  name:"Reading Lamp", icon:"bulb" },
+    { id:"ac",    name:"AC",          icon:"snow" },
+    { id:"tv",    name:"TV",          icon:"tv" },
   ]},
-  { id:"corridor", name:"الممر", pinX:58.2, pinY:55.1, devices:[
-    { id:"light",  name:"إضاءة الممر", icon:"bulb" },
-    { id:"night",  name:"لمبة ليلية",  icon:"moon" },
-    { id:"plug",   name:"مقبس ذكي",    icon:"plug" },
-    { id:"motion", name:"حساس الحركة", icon:"eye" },
+  { id:"corridor", name:"Corridor", pinX:58.2, pinY:55.1, devices:[
+    { id:"light",  name:"Corridor Light", icon:"bulb" },
+    { id:"night",  name:"Night Light",    icon:"moon" },
+    { id:"plug",   name:"Smart Plug",     icon:"plug" },
+    { id:"motion", name:"Motion Sensor",  icon:"eye" },
   ]},
-  { id:"kitchen", name:"المطبخ", pinX:82.1, pinY:55.9, devices:[
-    { id:"light",  name:"الإضاءة",     icon:"bulb" },
-    { id:"fan",    name:"شفاط الهواء", icon:"fan" },
-    { id:"heater", name:"سخان المياه", icon:"drop" },
-    { id:"plug",   name:"المقبس",      icon:"plug" },
+  { id:"kitchen", name:"Kitchen", pinX:82.1, pinY:55.9, devices:[
+    { id:"light",  name:"Light",        icon:"bulb" },
+    { id:"fan",    name:"Exhaust Fan",  icon:"fan" },
+    { id:"heater", name:"Water Heater", icon:"drop" },
+    { id:"plug",   name:"Socket",       icon:"plug" },
   ]},
-  { id:"bathroom", name:"الحمام", pinX:73.0, pinY:38.2, devices:[
-    { id:"light",  name:"الإضاءة",     icon:"bulb" },
-    { id:"fan",    name:"الشفاط",      icon:"fan" },
-    { id:"heater", name:"السخان",      icon:"drop" },
-    { id:"mirror", name:"لمبة المرايا", icon:"bulb" },
+  { id:"bathroom", name:"Bathroom", pinX:73.0, pinY:38.2, devices:[
+    { id:"light",  name:"Light",       icon:"bulb" },
+    { id:"fan",    name:"Exhaust Fan", icon:"fan" },
+    { id:"heater", name:"Water Heater",icon:"drop" },
+    { id:"mirror", name:"Mirror Light",icon:"bulb" },
   ]},
-  { id:"bedroom1", name:"غرفة النوم 1", pinX:35.1, pinY:49.0, devices:[
-    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
-    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
-    { id:"ac",      name:"التكييف",     icon:"snow" },
-    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  { id:"bedroom1", name:"Bedroom 1", pinX:35.1, pinY:49.0, devices:[
+    { id:"light",   name:"Ceiling Light", icon:"bulb" },
+    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
+    { id:"ac",      name:"AC",            icon:"snow" },
+    { id:"curtain", name:"Curtains",      icon:"curtain" },
   ]},
-  { id:"bedroom2", name:"غرفة النوم 2", pinX:33.0, pinY:72.1, devices:[
-    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
-    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
-    { id:"ac",      name:"التكييف",     icon:"snow" },
-    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  { id:"bedroom2", name:"Bedroom 2", pinX:33.0, pinY:72.1, devices:[
+    { id:"light",   name:"Ceiling Light", icon:"bulb" },
+    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
+    { id:"ac",      name:"AC",            icon:"snow" },
+    { id:"curtain", name:"Curtains",      icon:"curtain" },
   ]},
-  { id:"bedroom3", name:"غرفة النوم 3", pinX:66.0, pinY:79.0, devices:[
-    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
-    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
-    { id:"ac",      name:"التكييف",     icon:"snow" },
-    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  { id:"bedroom3", name:"Bedroom 3", pinX:66.0, pinY:79.0, devices:[
+    { id:"light",   name:"Ceiling Light", icon:"bulb" },
+    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
+    { id:"ac",      name:"AC",            icon:"snow" },
+    { id:"curtain", name:"Curtains",      icon:"curtain" },
   ]},
 ];
 
@@ -354,8 +354,8 @@ function updateSummaryUI(){
   const textEl = document.getElementById('summaryText');
   const dotEl = document.getElementById('summaryDot');
   if (!textEl) return;
-  if (!knownAny) { textEl.textContent = 'بيتأكد من الأجهزة...'; dotEl.classList.remove('on'); return; }
-  textEl.textContent = n === 0 ? 'كل حاجة مقفولة' : `${n} ${n === 1 ? 'جهاز شغال' : 'أجهزة شغالة'} الآن`;
+  if (!knownAny) { textEl.textContent = 'Checking devices...'; dotEl.classList.remove('on'); return; }
+  textEl.textContent = n === 0 ? 'Everything is off' : `${n} device${n === 1 ? '' : 's'} on now`;
   dotEl.classList.toggle('on', n > 0);
   document.getElementById('summary').classList.toggle('on', n > 0);
 }
@@ -372,7 +372,7 @@ const client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
 client.on('connect', () => {
   mqttConnected = true;
   connDot.className = 'dot online';
-  connText.textContent = 'متصل';
+  connText.textContent = 'Connected';
   client.subscribe(`${BASE_TOPIC}/+/+/status`);
   // give devices a window to report in; anything silent after that is "not wired yet"
   setTimeout(() => {
@@ -381,11 +381,11 @@ client.on('connect', () => {
   }, 4000);
 });
 client.on('reconnect', () => {
-  connDot.className = 'dot'; connText.textContent = 'بيحاول يتصل تاني...';
+  connDot.className = 'dot'; connText.textContent = 'Reconnecting...';
 });
 client.on('close', () => {
   mqttConnected = false;
-  connDot.className = 'dot offline'; connText.textContent = 'مقطوع الاتصال';
+  connDot.className = 'dot offline'; connText.textContent = 'Disconnected';
 });
 client.on('message', (topic, payload) => {
   // topic shape: home/<UNIQUE_ID>/<room>/<device>/status
@@ -452,11 +452,11 @@ function renderHome(){
     <div class="home-wrap">
       <div class="home-head">
         <div class="eyebrow">Live Floor Plan</div>
-        <h1>البيت الذكي</h1>
-        <p>دوس على أي نقطة على الخريطة عشان تتحكم في الغرفة دي</p>
+        <h1>Smart Home</h1>
+        <p>Tap any point on the map to control that room</p>
       </div>
       <div class="plan-frame">
-        <img src="floorplan.png" alt="مخطط الشقة" />
+        <img src="floorplan.png" alt="Apartment floor plan" />
         ${ROOMS.map(r => `
           <div class="room-glow ${roomIsActive(r) ? 'active' : ''}" style="left:${r.pinX}%; top:${r.pinY}%;"></div>
         `).join('')}
@@ -468,7 +468,7 @@ function renderHome(){
           </button>
         `).join('')}
       </div>
-      <div class="home-note">الأجهزة اللي لسه متوصلتش بهاردوير هتظهر باهتة لحد ما تضيفها</div>
+      <div class="home-note">Devices not wired to hardware yet will show dimmed until you add them</div>
     </div>
   `;
   app.querySelectorAll('.pin').forEach(btn => {
@@ -482,12 +482,12 @@ function renderRoom(room){
     <div class="room-wrap">
       <button class="back-btn" id="backBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6"/></svg>
-        الرئيسية
+        Home
       </button>
       <div class="room-head">
         <div class="eyebrow">Room</div>
         <h2>${room.name}</h2>
-        <p>${room.devices.length} أجهزة متاحة في المنطقة دي</p>
+        <p>${room.devices.length} devices available in this area</p>
       </div>
       <div class="divider"></div>
       <div class="device-grid">
@@ -511,11 +511,11 @@ function deviceCardHtml(roomId, device){
   const isUnknown = val === null;
 
   let statusLabel, cls = 'device-card';
-  if (isOffline) { statusLabel = 'لسه مش متوصل'; cls += ' offline'; }
-  else if (isUnknown) { statusLabel = 'بيتأكد من الحالة...'; cls += ' offline'; }
-  else if (isPending) { statusLabel = 'بيبعت الأمر...'; cls += ' pending'; }
-  else if (isOn) { statusLabel = 'شغالة'; cls += ' on'; }
-  else { statusLabel = 'مقفولة'; }
+  if (isOffline) { statusLabel = 'Not connected yet'; cls += ' offline'; }
+  else if (isUnknown) { statusLabel = 'Checking status...'; cls += ' offline'; }
+  else if (isPending) { statusLabel = 'Sending command...'; cls += ' pending'; }
+  else if (isOn) { statusLabel = 'On'; cls += ' on'; }
+  else { statusLabel = 'Off'; }
 
   return `
     <div class="${cls}" id="card-${roomId}-${device.id}">
