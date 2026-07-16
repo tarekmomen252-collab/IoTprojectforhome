@@ -3,182 +3,533 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>لمبات المدخل (تجربة)</title>
+<title>البيت الذكي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 <style>
   :root{
-    --night:#0b1220; --night-2:#121b30; --porch:#f5a623; --porch-soft:#ffd98a;
-    --slate:#3a4150; --text:#e8e6e1; --text-dim:#8791a3; --danger:#d97757;
+    --night:#0a0f1c;
+    --night-2:#111a2e;
+    --panel:#141f38;
+    --line: rgba(232,230,225,0.09);
+    --porch:#f5a623;
+    --porch-soft:#ffd98a;
+    --porch-dim: rgba(245,166,35,0.14);
+    --slate:#3a4150;
+    --text:#e8e6e1;
+    --text-dim:#8791a3;
+    --text-faint:#565f74;
+    --danger:#d97757;
+    --ok:#6fcf97;
   }
   *{box-sizing:border-box;}
   html,body{height:100%;margin:0;}
   body{
     font-family:'IBM Plex Sans Arabic', system-ui, sans-serif;
-    background: radial-gradient(ellipse at 50% 20%, var(--night-2), var(--night) 70%);
-    color:var(--text); display:flex; align-items:center; justify-content:center;
-    min-height:100vh; transition: background 1.2s ease; padding:24px;
+    background: radial-gradient(ellipse 900px 600px at 50% 0%, var(--night-2), var(--night) 65%);
+    color:var(--text);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
   }
-  body.any-on{ background: radial-gradient(ellipse at 50% 15%, #2a2412 0%, var(--night) 65%); }
-  .status-bar{ position:fixed; top:20px; right:24px; font-size:13px; color:var(--text-dim);
-    display:flex; align-items:center; gap:8px; }
-  .dot{ width:8px;height:8px;border-radius:50%; background:var(--slate); transition: all .3s; }
-  .dot.online{ background:#6fcf97; box-shadow:0 0 8px #6fcf9788; }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  /* ---------- top status bar ---------- */
+  .topbar{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px;
+    background: linear-gradient(180deg, rgba(10,15,28,0.92), rgba(10,15,28,0));
+    pointer-events:none;
+  }
+  .topbar > *{ pointer-events:auto; }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:16px;
+    letter-spacing:0.01em;
+  }
+  .brand-dot{ width:8px; height:8px; border-radius:50%; background:var(--porch); box-shadow:0 0 10px var(--porch); }
+  .conn{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .dot{ width:7px;height:7px;border-radius:50%; background:var(--slate); transition: all .3s; }
+  .dot.online{ background:var(--ok); box-shadow:0 0 8px rgba(111,207,151,0.6); }
   .dot.offline{ background:var(--danger); }
-  .card{ text-align:center; padding:56px 48px 44px; }
-  .eyebrow{ font-size:13px; letter-spacing:0.18em; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; }
-  h1{ font-family:'Space Grotesk', sans-serif; font-size:26px; margin:0 0 6px; font-weight:700; }
-  .sub{ font-size:13px; color:var(--text-dim); margin-bottom:42px; }
 
-  .lamps-row{ display:flex; gap:48px; justify-content:center; flex-wrap:wrap; }
-  .lamp-unit{ display:flex; flex-direction:column; align-items:center; }
-  .lamp-name{ font-family:'Space Grotesk', sans-serif; font-size:14px; color:var(--text-dim);
-    letter-spacing:0.06em; margin-bottom:18px; text-transform:uppercase; }
+  .topbar-right{ display:flex; align-items:center; gap:14px; }
+  .vline{ width:1px; height:14px; background:var(--line); }
+  .summary{
+    display:flex; align-items:center; gap:8px;
+    font-size:12px; color:var(--text-dim); font-family:'IBM Plex Mono', monospace;
+    transition: color .3s;
+  }
+  .summary-dot{
+    width:7px; height:7px; border-radius:50%; background:var(--slate);
+    transition: background .4s, box-shadow .4s;
+  }
+  .summary-dot.on{ background:var(--porch); box-shadow:0 0 8px rgba(245,166,35,0.7); }
+  .summary.on{ color:var(--porch-soft); }
 
-  .lamp-shell{ position:relative; width:150px; height:150px; margin:0 auto 24px; }
-  .glow{ position:absolute; inset:-34px; border-radius:50%;
-    background: radial-gradient(circle, var(--porch-soft) 0%, transparent 70%);
-    opacity:0; transition: opacity .5s ease; filter: blur(2px); }
-  .glow.on{ opacity:0.55; }
-  .switch-btn{ position:relative; width:150px; height:150px; border-radius:50%;
-    border:2px solid var(--slate); background: linear-gradient(180deg, #1a2338, #0e1526);
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    transition: border-color .4s, background .4s, transform .15s;
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.4); }
-  .switch-btn:active{ transform: scale(0.97); }
-  .switch-btn.on{ border-color: var(--porch);
-    background: radial-gradient(circle at 50% 40%, #4a3618, #24200f);
-    box-shadow: 0 0 40px 8px rgba(245,166,35,0.35), inset 0 0 20px rgba(255,217,138,0.2); }
-  .switch-btn:disabled{ cursor:wait; opacity:0.6; }
-  .bulb-icon{ width:48px;height:48px; stroke: var(--text-dim); fill:none; stroke-width:1.6; transition: stroke .4s; }
-  .switch-btn.on .bulb-icon{ stroke: var(--porch-soft); }
-  .state-label{ font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:700;
-    margin-top:4px; color:var(--slate); transition: color .4s; }
-  .state-label.on{ color: var(--porch); }
-  .meta{ margin-top:14px; font-size:12px; color:var(--text-dim); min-height:16px; }
+  #app{
+    padding-top:78px;
+    transition: opacity .22s ease, transform .22s ease;
+    opacity:1; transform:translateY(0);
+  }
+  #app.leaving{ opacity:0; transform:translateY(8px); }
+  #app.entering{ opacity:0; transform:translateY(-8px); transition:none; }
+
+  /* ---------- HOME VIEW ---------- */
+  .home-wrap{
+    max-width:920px; margin:0 auto; padding:0 20px 60px;
+  }
+  .home-head{ text-align:center; margin-bottom:28px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--text-faint); margin-bottom:10px;
+  }
+  .home-head h1{
+    font-family:'Space Grotesk', sans-serif; font-size:30px; font-weight:700; margin:0;
+  }
+  .home-head p{ color:var(--text-dim); font-size:14px; margin-top:8px; }
+
+  .plan-frame{
+    position:relative;
+    direction: ltr; /* keep pin math simple regardless of page direction */
+    border-radius:20px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    background: #0d1426;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.6);
+  }
+  .plan-frame img{
+    display:block; width:100%; height:auto;
+    filter: brightness(0.82) saturate(0.9);
+  }
+
+  .room-glow{
+    position:absolute;
+    width:150px; height:150px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(255,217,138,0.4), transparent 70%);
+    filter: blur(8px);
+    opacity:0;
+    transition: opacity .7s ease;
+    pointer-events:none;
+  }
+  .room-glow.active{ opacity:1; }
+
+  .pin{
+    position:absolute;
+    transform: translate(-50%,-50%);
+    width:30px; height:30px;
+    border:none; background:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pin-core{
+    width:13px; height:13px; border-radius:50%;
+    background: var(--slate);
+    box-shadow:none;
+    transition: transform .2s ease, background .4s ease, box-shadow .4s ease;
+  }
+  .pin.active .pin-core{
+    background: var(--porch);
+    box-shadow: 0 0 0 4px var(--porch-dim), 0 0 16px 2px rgba(245,166,35,0.7);
+  }
+  .pin-ring{
+    position:absolute; inset:0; border-radius:50%;
+    border:1.5px solid rgba(245,166,35,0.55);
+    opacity:0;
+  }
+  .pin.active .pin-ring{ opacity:1; animation: pin-pulse 2.6s ease-out infinite; }
+  @keyframes pin-pulse{
+    0%{ transform:scale(0.4); opacity:0.9; }
+    100%{ transform:scale(1.9); opacity:0; }
+  }
+  .pin:hover .pin-core{ transform:scale(1.25); }
+  .pin-tag{
+    position:absolute; bottom:calc(100% + 8px); right:50%; transform:translateX(50%);
+    background:var(--panel); border:1px solid var(--line);
+    color:var(--text); font-size:12px; font-weight:500;
+    padding:5px 10px; border-radius:8px; white-space:nowrap;
+    opacity:0; pointer-events:none; transition: opacity .15s ease, transform .15s ease;
+  }
+  .pin:hover .pin-tag{ opacity:1; }
+
+  .home-note{
+    margin-top:18px; text-align:center; font-size:12px; color:var(--text-faint);
+  }
+
+  /* ---------- ROOM VIEW ---------- */
+  .room-wrap{ max-width:640px; margin:0 auto; padding:0 20px 60px; }
+
+  .back-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    background:none; border:1px solid var(--line); color:var(--text-dim);
+    font-family:'IBM Plex Sans Arabic', sans-serif; font-size:13px;
+    padding:9px 16px; border-radius:999px; cursor:pointer;
+    transition: border-color .2s, color .2s;
+    margin-bottom:26px;
+  }
+  .back-btn:hover{ border-color: var(--porch); color: var(--porch); }
+  .back-btn svg{ width:15px; height:15px; }
+
+  .room-head{ margin-bottom:8px; }
+  .room-head .eyebrow{ margin-bottom:8px; }
+  .room-head h2{
+    font-family:'Space Grotesk', sans-serif; font-size:28px; font-weight:700; margin:0;
+  }
+  .room-head p{ color:var(--text-dim); font-size:13px; margin-top:6px; }
+
+  .divider{ height:1px; background:var(--line); margin:24px 0 28px; }
+
+  .device-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:14px;
+  }
+  @media (max-width:420px){ .device-grid{ grid-template-columns:1fr; } }
+
+  .device-card{
+    position:relative;
+    border:1px solid var(--line);
+    background: linear-gradient(180deg, var(--panel), rgba(20,31,56,0.5));
+    border-radius:16px;
+    padding:20px 18px;
+    display:flex; flex-direction:column; align-items:flex-start; gap:14px;
+    cursor:pointer;
+    transition: border-color .3s, background .3s, transform .12s;
+    text-align:right;
+  }
+  .device-card:hover{ transform: translateY(-2px); border-color: rgba(255,255,255,0.16); }
+  .device-card:active{ transform: scale(0.985); }
+  .device-card.on{
+    border-color: rgba(245,166,35,0.5);
+    background: linear-gradient(180deg, #2a2210, #171f38);
+    box-shadow: 0 0 30px -6px rgba(245,166,35,0.35);
+  }
+  .device-card.offline{ cursor:default; opacity:0.55; }
+  .device-card.pending{ cursor:wait; }
+
+  .device-icon-shell{
+    width:42px; height:42px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(255,255,255,0.04);
+    border:1px solid var(--line);
+    transition: background .3s, border-color .3s;
+  }
+  .device-card.on .device-icon-shell{
+    background: rgba(245,166,35,0.14); border-color: rgba(245,166,35,0.4);
+  }
+  .device-icon-shell svg{
+    width:22px; height:22px; stroke:var(--text-dim); fill:none; stroke-width:1.6;
+    transition: stroke .3s;
+  }
+  .device-card.on .device-icon-shell svg{ stroke: var(--porch-soft); }
+
+  .device-name{
+    font-size:14.5px; font-weight:600; color:var(--text);
+  }
+  .device-status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; color:var(--text-faint);
+    display:flex; align-items:center; gap:6px;
+  }
+  .device-status .sdot{ width:6px;height:6px;border-radius:50%; background:var(--slate); }
+  .device-card.on .device-status{ color: var(--porch); }
+  .device-card.on .device-status .sdot{ background:var(--porch); box-shadow:0 0 6px var(--porch); }
 </style>
 </head>
 <body>
-  <div class="status-bar">
-    <span class="dot" id="connDot"></span>
-    <span id="connText">بيتصل...</span>
-  </div>
 
-  <div class="card">
-    <div class="eyebrow">Simulation Mode</div>
-    <h1>لمبات المدخل</h1>
-    <div class="sub">متصل بـ Wokwi عن طريق public test broker</div>
-
-    <div class="lamps-row" id="lampsRow"></div>
+<div class="topbar">
+  <div class="brand"><span class="brand-dot"></span> البيت الذكي</div>
+  <div class="topbar-right">
+    <div class="summary" id="summary">
+      <span class="summary-dot" id="summaryDot"></span>
+      <span id="summaryText">بيتأكد...</span>
+    </div>
+    <div class="vline"></div>
+    <div class="conn"><span class="dot" id="connDot"></span><span id="connText">بيتصل...</span></div>
   </div>
+</div>
+
+<div id="app"></div>
 
 <script>
-  // ---- must match UNIQUE_ID in the Wokwi sketch ----
-  const UNIQUE_ID = "ahmed-lamp-7391";
-  // ---------------------------------------------------
+/* ================= CONFIG ================= */
+// Must match the UNIQUE_ID used on your ESP32 sketch(es)
+const UNIQUE_ID = "ahmed-lamp-7391";
 
-  const MQTT_HOST = "broker.hivemq.com";
-  const MQTT_PORT = 8884; // public broker's SECURE websocket port (wss, no auth)
+const MQTT_HOST = "broker.hivemq.com";
+const MQTT_PORT = 8884; // secure websocket (wss) — required for https-hosted pages
+const BASE_TOPIC = `home/${UNIQUE_ID}`;
 
-  // ---- Lamp definitions: add/remove entries here if you add more lamps ----
-  const LAMPS = [
-    { id: "lamp1", label: "اللمبة الأولى (GPIO 2)" },
-    { id: "lamp2", label: "اللمبة التانية (GPIO 4)" },
-  ];
+// pinX/pinY are percentages measured from the top-left of floorplan.png
+const ROOMS = [
+  { id:"main-entry", name:"المدخل الرئيسي", pinX:56.1, pinY:20.4, devices:[
+    { id:"lamp",   name:"لمبة المدخل", icon:"bulb" },
+    { id:"lock",   name:"قفل الباب",   icon:"lock" },
+    { id:"bell",   name:"جرس الباب",   icon:"bell" },
+    { id:"motion", name:"لمبة الحركة", icon:"moon" },
+  ]},
+  { id:"reception", name:"الاستقبال", pinX:37.1, pinY:32.8, devices:[
+    { id:"light", name:"الإضاءة الرئيسية", icon:"bulb" },
+    { id:"lamp",  name:"لمبة القراءة",     icon:"bulb" },
+    { id:"ac",    name:"التكييف",          icon:"snow" },
+    { id:"tv",    name:"التلفزيون",         icon:"tv" },
+  ]},
+  { id:"corridor", name:"الممر", pinX:58.2, pinY:55.1, devices:[
+    { id:"light",  name:"إضاءة الممر", icon:"bulb" },
+    { id:"night",  name:"لمبة ليلية",  icon:"moon" },
+    { id:"plug",   name:"مقبس ذكي",    icon:"plug" },
+    { id:"motion", name:"حساس الحركة", icon:"eye" },
+  ]},
+  { id:"kitchen", name:"المطبخ", pinX:82.1, pinY:55.9, devices:[
+    { id:"light",  name:"الإضاءة",     icon:"bulb" },
+    { id:"fan",    name:"شفاط الهواء", icon:"fan" },
+    { id:"heater", name:"سخان المياه", icon:"drop" },
+    { id:"plug",   name:"المقبس",      icon:"plug" },
+  ]},
+  { id:"bathroom", name:"الحمام", pinX:73.0, pinY:38.2, devices:[
+    { id:"light",  name:"الإضاءة",     icon:"bulb" },
+    { id:"fan",    name:"الشفاط",      icon:"fan" },
+    { id:"heater", name:"السخان",      icon:"drop" },
+    { id:"mirror", name:"لمبة المرايا", icon:"bulb" },
+  ]},
+  { id:"bedroom1", name:"غرفة النوم 1", pinX:35.1, pinY:49.0, devices:[
+    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
+    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
+    { id:"ac",      name:"التكييف",     icon:"snow" },
+    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  ]},
+  { id:"bedroom2", name:"غرفة النوم 2", pinX:33.0, pinY:72.1, devices:[
+    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
+    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
+    { id:"ac",      name:"التكييف",     icon:"snow" },
+    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  ]},
+  { id:"bedroom3", name:"غرفة النوم 3", pinX:66.0, pinY:79.0, devices:[
+    { id:"light",   name:"إضاءة السقف", icon:"bulb" },
+    { id:"lamp",    name:"لمبة السرير", icon:"bulb" },
+    { id:"ac",      name:"التكييف",     icon:"snow" },
+    { id:"curtain", name:"الستائر",     icon:"curtain" },
+  ]},
+];
 
-  const connDot = document.getElementById('connDot');
-  const connText = document.getElementById('connText');
-  const lampsRow = document.getElementById('lampsRow');
+/* ================= ICONS ================= */
+const ICONS = {
+  bulb:   `<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/>`,
+  lock:   `<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`,
+  bell:   `<path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/>`,
+  moon:   `<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>`,
+  snow:   `<path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11M2 12h20M12 2l2 2M12 2l-2 2M12 22l2-2M12 22l-2-2"/>`,
+  tv:     `<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8M12 18v3"/>`,
+  plug:   `<path d="M9 3v6M15 3v6M6 9h12v3a6 6 0 0 1-12 0V9Z"/><path d="M12 18v3"/>`,
+  eye:    `<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="2.5"/>`,
+  fan:    `<circle cx="12" cy="12" r="1.6"/><path d="M12 12c0-3.5 1.5-7 4-7s2 4-4 7Zm0 0c3.5 0 7 1.5 7 4s-4 2-7-4Zm0 0c0 3.5-1.5 7-4 7s-2-4 4-7Zm0 0c-3.5 0-7-1.5-7-4s4-2 7 4Z"/>`,
+  drop:   `<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/>`,
+  curtain:`<path d="M4 4h16M6 4c0 6-2 8-2 16M12 4c0 6-2 8-2 16M12 4c0 6 2 8 2 16M18 4c0 6 2 8 2 16"/>`,
+};
+function iconSvg(name){
+  return `<svg viewBox="0 0 24 24">${ICONS[name] || ICONS.bulb}</svg>`;
+}
 
-  const bulbSvg = `
-    <svg class="bulb-icon" viewBox="0 0 24 24">
-      <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/>
-    </svg>`;
+/* ================= STATE ================= */
+// key = `${roomId}/${deviceId}` -> true | false | null(unknown) | 'offline'
+const state = {};
+const pendingKeys = new Set();
+let mqttConnected = false;
 
-  // Build UI + per-lamp state for each lamp
-  const lampState = {};
-  LAMPS.forEach(lamp => {
-    lampState[lamp.id] = { current: null, pending: false, timer: null };
+function keyOf(roomId, deviceId){ return `${roomId}/${deviceId}`; }
+ROOMS.forEach(r => r.devices.forEach(d => { state[keyOf(r.id,d.id)] = null; }));
 
-    const unit = document.createElement('div');
-    unit.className = 'lamp-unit';
-    unit.innerHTML = `
-      <div class="lamp-name">${lamp.label}</div>
-      <div class="lamp-shell">
-        <div class="glow" id="glow-${lamp.id}"></div>
-        <button class="switch-btn" id="switch-${lamp.id}" disabled>${bulbSvg}</button>
-      </div>
-      <div class="state-label" id="label-${lamp.id}">—</div>
-      <div class="meta" id="meta-${lamp.id}"></div>
-    `;
-    lampsRow.appendChild(unit);
-  });
+function roomIsActive(room){
+  return room.devices.some(d => state[keyOf(room.id, d.id)] === true);
+}
+function updateSummaryUI(){
+  const n = Object.values(state).filter(v => v === true).length;
+  const knownAny = Object.values(state).some(v => v === true || v === false);
+  const textEl = document.getElementById('summaryText');
+  const dotEl = document.getElementById('summaryDot');
+  if (!textEl) return;
+  if (!knownAny) { textEl.textContent = 'بيتأكد من الأجهزة...'; dotEl.classList.remove('on'); return; }
+  textEl.textContent = n === 0 ? 'كل حاجة مقفولة' : `${n} ${n === 1 ? 'جهاز شغال' : 'أجهزة شغالة'} الآن`;
+  dotEl.classList.toggle('on', n > 0);
+  document.getElementById('summary').classList.toggle('on', n > 0);
+}
 
-  function updateAnyOnClass() {
-    const anyOn = LAMPS.some(l => lampState[l.id].current === true);
-    document.body.classList.toggle('any-on', anyOn);
+/* ================= MQTT ================= */
+const connDot = document.getElementById('connDot');
+const connText = document.getElementById('connText');
+
+const client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
+  clientId: 'web-' + UNIQUE_ID + '-' + Math.random().toString(16).slice(2),
+  reconnectPeriod: 3000,
+});
+
+client.on('connect', () => {
+  mqttConnected = true;
+  connDot.className = 'dot online';
+  connText.textContent = 'متصل';
+  client.subscribe(`${BASE_TOPIC}/+/+/status`);
+  // give devices a window to report in; anything silent after that is "not wired yet"
+  setTimeout(() => {
+    Object.keys(state).forEach(k => { if (state[k] === null) state[k] = 'offline'; });
+    refresh();
+  }, 4000);
+});
+client.on('reconnect', () => {
+  connDot.className = 'dot'; connText.textContent = 'بيحاول يتصل تاني...';
+});
+client.on('close', () => {
+  mqttConnected = false;
+  connDot.className = 'dot offline'; connText.textContent = 'مقطوع الاتصال';
+});
+client.on('message', (topic, payload) => {
+  // topic shape: home/<UNIQUE_ID>/<room>/<device>/status
+  const parts = topic.split('/');
+  const roomId = parts[2], deviceId = parts[3];
+  const key = keyOf(roomId, deviceId);
+  if (!(key in state)) return;
+  state[key] = payload.toString() === 'ON';
+  pendingKeys.delete(key);
+  refresh();
+});
+
+function toggleDevice(roomId, deviceId){
+  const key = keyOf(roomId, deviceId);
+  if (pendingKeys.has(key)) return;
+  if (state[key] !== true && state[key] !== false) return; // unknown/offline -> ignore
+  pendingKeys.add(key);
+  const next = !state[key];
+  client.publish(`${BASE_TOPIC}/${roomId}/${deviceId}/set`, next ? 'ON' : 'OFF');
+  refresh();
+  setTimeout(() => { if (pendingKeys.has(key)) { pendingKeys.delete(key); refresh(); } }, 4000);
+}
+
+/* ================= ROUTER / RENDER ================= */
+const app = document.getElementById('app');
+
+function parseHash(){
+  const h = location.hash.replace(/^#\/?/, '');
+  if (h.startsWith('room/')) return { view:'room', roomId: h.slice(5) };
+  return { view:'home' };
+}
+
+function doRender(){
+  const route = parseHash();
+  if (route.view === 'room') {
+    const room = ROOMS.find(r => r.id === route.roomId);
+    if (room) { renderRoom(room); updateSummaryUI(); return; }
   }
+  renderHome();
+  updateSummaryUI();
+}
 
-  function render(lampId, on) {
-    document.getElementById(`switch-${lampId}`).classList.toggle('on', on);
-    document.getElementById(`glow-${lampId}`).classList.toggle('on', on);
-    const label = document.getElementById(`label-${lampId}`);
-    label.classList.toggle('on', on);
-    label.textContent = on ? 'شغالة' : 'مقفولة';
-    updateAnyOnClass();
-  }
+// instant re-render for state-only updates (mqtt messages, toggles) — no page transition
+function refresh(){ doRender(); }
 
-  function topicSet(lampId)    { return `home/${UNIQUE_ID}/${lampId}/set`; }
-  function topicStatus(lampId) { return `home/${UNIQUE_ID}/${lampId}/status`; }
-
-  const client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
-    clientId: 'web-' + UNIQUE_ID + '-' + Math.random().toString(16).slice(2),
-    reconnectPeriod: 3000,
-  });
-
-  client.on('connect', () => {
-    connDot.className = 'dot online';
-    connText.textContent = 'متصل';
-    LAMPS.forEach(lamp => client.subscribe(topicStatus(lamp.id)));
-  });
-  client.on('reconnect', () => {
-    connDot.className = 'dot';
-    connText.textContent = 'بيحاول يتصل تاني...';
-    LAMPS.forEach(lamp => { document.getElementById(`switch-${lamp.id}`).disabled = true; });
-  });
-  client.on('close', () => {
-    connDot.className = 'dot offline';
-    connText.textContent = 'مقطوع الاتصال';
-    LAMPS.forEach(lamp => { document.getElementById(`switch-${lamp.id}`).disabled = true; });
-  });
-  client.on('message', (topic, payload) => {
-    const lamp = LAMPS.find(l => topic === topicStatus(l.id));
-    if (!lamp) return;
-    const st = lampState[lamp.id];
-    st.current = (payload.toString() === 'ON');
-    render(lamp.id, st.current);
-    st.pending = false;
-    document.getElementById(`switch-${lamp.id}`).disabled = false;
-    document.getElementById(`meta-${lamp.id}`).textContent =
-      'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG');
-  });
-
-  LAMPS.forEach(lamp => {
-    const btn = document.getElementById(`switch-${lamp.id}`);
-    btn.addEventListener('click', () => {
-      const st = lampState[lamp.id];
-      if (st.pending || st.current === null) return;
-      st.pending = true;
-      btn.disabled = true;
-      const next = !st.current;
-      client.publish(topicSet(lamp.id), next ? 'ON' : 'OFF');
-      document.getElementById(`meta-${lamp.id}`).textContent = 'بيبعت الأمر...';
-      st.timer = setTimeout(() => {
-        if (st.pending) { st.pending = false; btn.disabled = false; }
-      }, 4000);
+// animated re-render for actual navigation (home <-> room)
+function navigate(){
+  app.classList.add('leaving');
+  setTimeout(() => {
+    doRender();
+    window.scrollTo(0,0);
+    app.classList.add('entering');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        app.classList.remove('leaving');
+        app.classList.remove('entering');
+      });
     });
+  }, 220);
+}
+
+function renderHome(){
+  app.innerHTML = `
+    <div class="home-wrap">
+      <div class="home-head">
+        <div class="eyebrow">Live Floor Plan</div>
+        <h1>البيت الذكي</h1>
+        <p>دوس على أي نقطة على الخريطة عشان تتحكم في الغرفة دي</p>
+      </div>
+      <div class="plan-frame">
+        <img src="floorplan.png" alt="مخطط الشقة" />
+        ${ROOMS.map(r => `
+          <div class="room-glow ${roomIsActive(r) ? 'active' : ''}" style="left:${r.pinX}%; top:${r.pinY}%;"></div>
+        `).join('')}
+        ${ROOMS.map(r => `
+          <button class="pin ${roomIsActive(r) ? 'active' : ''}" style="left:${r.pinX}%; top:${r.pinY}%;" data-room="${r.id}" aria-label="${r.name}">
+            <span class="pin-ring"></span>
+            <span class="pin-core"></span>
+            <span class="pin-tag">${r.name}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="home-note">الأجهزة اللي لسه متوصلتش بهاردوير هتظهر باهتة لحد ما تضيفها</div>
+    </div>
+  `;
+  app.querySelectorAll('.pin').forEach(btn => {
+    btn.addEventListener('click', () => { location.hash = `#/room/${btn.dataset.room}`; });
   });
+}
+
+
+function renderRoom(room){
+  app.innerHTML = `
+    <div class="room-wrap">
+      <button class="back-btn" id="backBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 6l-6 6 6 6"/></svg>
+        الرئيسية
+      </button>
+      <div class="room-head">
+        <div class="eyebrow">Room</div>
+        <h2>${room.name}</h2>
+        <p>${room.devices.length} أجهزة متاحة في المنطقة دي</p>
+      </div>
+      <div class="divider"></div>
+      <div class="device-grid">
+        ${room.devices.map(d => deviceCardHtml(room.id, d)).join('')}
+      </div>
+    </div>
+  `;
+  document.getElementById('backBtn').addEventListener('click', () => { location.hash = '#/'; });
+  room.devices.forEach(d => {
+    const el = document.getElementById(`card-${room.id}-${d.id}`);
+    if (el) el.addEventListener('click', () => toggleDevice(room.id, d.id));
+  });
+}
+
+function deviceCardHtml(roomId, device){
+  const key = keyOf(roomId, device.id);
+  const val = state[key];
+  const isPending = pendingKeys.has(key);
+  const isOn = val === true;
+  const isOffline = val === 'offline';
+  const isUnknown = val === null;
+
+  let statusLabel, cls = 'device-card';
+  if (isOffline) { statusLabel = 'لسه مش متوصل'; cls += ' offline'; }
+  else if (isUnknown) { statusLabel = 'بيتأكد من الحالة...'; cls += ' offline'; }
+  else if (isPending) { statusLabel = 'بيبعت الأمر...'; cls += ' pending'; }
+  else if (isOn) { statusLabel = 'شغالة'; cls += ' on'; }
+  else { statusLabel = 'مقفولة'; }
+
+  return `
+    <div class="${cls}" id="card-${roomId}-${device.id}">
+      <div class="device-icon-shell">${iconSvg(device.icon)}</div>
+      <div>
+        <div class="device-name">${device.name}</div>
+        <div class="device-status"><span class="sdot"></span>${statusLabel}</div>
+      </div>
+    </div>
+  `;
+}
+
+window.addEventListener('hashchange', navigate);
+doRender();
 </script>
 </body>
 </html>
