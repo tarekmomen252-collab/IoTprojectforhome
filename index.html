@@ -239,6 +239,13 @@
   .device-status .sdot{ width:6px;height:6px;border-radius:50%; background:var(--slate); }
   .device-card.on .device-status{ color: var(--porch); }
   .device-card.on .device-status .sdot{ background:var(--porch); box-shadow:0 0 6px var(--porch); }
+
+  .gpio-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px; color:var(--text-faint);
+    border:1px solid var(--line); border-radius:6px;
+    padding:2px 7px; margin-top:2px; display:inline-block;
+  }
 </style>
 </head>
 <body>
@@ -269,7 +276,7 @@ const BASE_TOPIC = `home/${UNIQUE_ID}`;
 // pinX/pinY are percentages measured from the top-left of floorplan.png
 const ROOMS = [
   { id:"main-entry", name:"Main Entry", pinX:56.1, pinY:20.4, devices:[
-    { id:"lamp",   name:"Entrance Lamp", icon:"bulb" },
+    { id:"lamp",   name:"Entrance Lamp", icon:"bulb", gpio:26 },
     { id:"lock",   name:"Door Lock",     icon:"lock" },
     { id:"bell",   name:"Doorbell",      icon:"bell" },
     { id:"motion", name:"Motion Light",  icon:"moon" },
@@ -517,12 +524,17 @@ function deviceCardHtml(roomId, device){
   else if (isOn) { statusLabel = 'On'; cls += ' on'; }
   else { statusLabel = 'Off'; }
 
+  const gpioBadge = device.gpio !== undefined
+    ? `<span class="gpio-tag">GPIO ${device.gpio}</span>`
+    : '';
+
   return `
     <div class="${cls}" id="card-${roomId}-${device.id}">
       <div class="device-icon-shell">${iconSvg(device.icon)}</div>
       <div>
         <div class="device-name">${device.name}</div>
         <div class="device-status"><span class="sdot"></span>${statusLabel}</div>
+        ${gpioBadge}
       </div>
     </div>
   `;
