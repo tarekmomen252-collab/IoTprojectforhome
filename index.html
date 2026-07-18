@@ -33,7 +33,7 @@
     -webkit-font-smoothing:antialiased;
   }
   .mono{ font-family:'IBM Plex Mono', monospace; }
-
+ 
   /* ---------- top status bar ---------- */
   .topbar{
     position:fixed; top:0; left:0; right:0; z-index:40;
@@ -57,7 +57,7 @@
   .dot{ width:7px;height:7px;border-radius:50%; background:var(--slate); transition: all .3s; }
   .dot.online{ background:var(--ok); box-shadow:0 0 8px rgba(111,207,151,0.6); }
   .dot.offline{ background:var(--danger); }
-
+ 
   .topbar-right{ display:flex; align-items:center; gap:14px; }
   .vline{ width:1px; height:14px; background:var(--line); }
   .summary{
@@ -71,7 +71,7 @@
   }
   .summary-dot.on{ background:var(--porch); box-shadow:0 0 8px rgba(245,166,35,0.7); }
   .summary.on{ color:var(--porch-soft); }
-
+ 
   #app{
     padding-top:78px;
     transition: opacity .22s ease, transform .22s ease;
@@ -79,7 +79,7 @@
   }
   #app.leaving{ opacity:0; transform:translateY(8px); }
   #app.entering{ opacity:0; transform:translateY(-8px); transition:none; }
-
+ 
   /* ---------- HOME VIEW ---------- */
   .home-wrap{
     max-width:920px; margin:0 auto; padding:0 20px 60px;
@@ -94,7 +94,7 @@
     font-family:'Space Grotesk', sans-serif; font-size:30px; font-weight:700; margin:0;
   }
   .home-head p{ color:var(--text-dim); font-size:14px; margin-top:8px; }
-
+ 
   .plan-frame{
     position:relative;
     direction: ltr; /* keep pin math simple regardless of page direction */
@@ -108,7 +108,7 @@
     display:block; width:100%; height:auto;
     filter: brightness(0.82) saturate(0.9);
   }
-
+ 
   .room-glow{
     position:absolute;
     width:150px; height:150px;
@@ -121,7 +121,7 @@
     pointer-events:none;
   }
   .room-glow.active{ opacity:1; }
-
+ 
   .pin{
     position:absolute;
     transform: translate(-50%,-50%);
@@ -158,14 +158,14 @@
     opacity:0; pointer-events:none; transition: opacity .15s ease, transform .15s ease;
   }
   .pin:hover .pin-tag{ opacity:1; }
-
+ 
   .home-note{
     margin-top:18px; text-align:center; font-size:12px; color:var(--text-faint);
   }
-
+ 
   /* ---------- ROOM VIEW ---------- */
   .room-wrap{ max-width:640px; margin:0 auto; padding:0 20px 60px; }
-
+ 
   .back-btn{
     display:inline-flex; align-items:center; gap:8px;
     background:none; border:1px solid var(--line); color:var(--text-dim);
@@ -176,21 +176,21 @@
   }
   .back-btn:hover{ border-color: var(--porch); color: var(--porch); }
   .back-btn svg{ width:15px; height:15px; }
-
+ 
   .room-head{ margin-bottom:8px; }
   .room-head .eyebrow{ margin-bottom:8px; }
   .room-head h2{
     font-family:'Space Grotesk', sans-serif; font-size:28px; font-weight:700; margin:0;
   }
   .room-head p{ color:var(--text-dim); font-size:13px; margin-top:6px; }
-
+ 
   .divider{ height:1px; background:var(--line); margin:24px 0 28px; }
-
+ 
   .device-grid{
     display:grid; grid-template-columns:1fr 1fr; gap:14px;
   }
   @media (max-width:420px){ .device-grid{ grid-template-columns:1fr; } }
-
+ 
   .device-card{
     position:relative;
     border:1px solid var(--line);
@@ -211,7 +211,7 @@
   }
   .device-card.offline{ cursor:default; opacity:0.55; }
   .device-card.pending{ cursor:wait; }
-
+ 
   .device-icon-shell{
     width:42px; height:42px; border-radius:12px;
     display:flex; align-items:center; justify-content:center;
@@ -227,7 +227,7 @@
     transition: stroke .3s;
   }
   .device-card.on .device-icon-shell svg{ stroke: var(--porch-soft); }
-
+ 
   .device-name{
     font-size:14.5px; font-weight:600; color:var(--text);
   }
@@ -239,7 +239,7 @@
   .device-status .sdot{ width:6px;height:6px;border-radius:50%; background:var(--slate); }
   .device-card.on .device-status{ color: var(--porch); }
   .device-card.on .device-status .sdot{ background:var(--porch); box-shadow:0 0 6px var(--porch); }
-
+ 
   .gpio-tag{
     font-family:'IBM Plex Mono', monospace;
     font-size:10px; color:var(--text-faint);
@@ -249,7 +249,7 @@
 </style>
 </head>
 <body>
-
+ 
 <div class="topbar">
   <div class="brand"><span class="brand-dot"></span> Smart Home</div>
   <div class="topbar-right">
@@ -261,70 +261,66 @@
     <div class="conn"><span class="dot" id="connDot"></span><span id="connText">Connecting...</span></div>
   </div>
 </div>
-
+ 
 <div id="app"></div>
-
+ 
 <script>
 /* ================= CONFIG ================= */
 // Must match the UNIQUE_ID used on your ESP32 sketch(es)
 const UNIQUE_ID = "ahmed-lamp-7391";
-
+ 
 const MQTT_HOST = "broker.hivemq.com";
 const MQTT_PORT = 8884; // secure websocket (wss) — required for https-hosted pages
 const BASE_TOPIC = `home/${UNIQUE_ID}`;
-
+ 
 // pinX/pinY are percentages measured from the top-left of floorplan.png
 const ROOMS = [
   { id:"main-entry", name:"Main Entry", pinX:56.1, pinY:20.4, devices:[
-    { id:"lamp",   name:"Entrance Lamp", icon:"bulb", gpio:26 },
-    { id:"lock",   name:"Door Lock",     icon:"lock" },
-    { id:"bell",   name:"Doorbell",      icon:"bell" },
-    { id:"motion", name:"Motion Light",  icon:"moon" },
+    { id:"entry-lamp", name:"Entry Lamp", icon:"bulb", gpio:26, board:"A" },
   ]},
   { id:"reception", name:"Reception", pinX:37.1, pinY:32.8, devices:[
-    { id:"light", name:"Main Light",  icon:"bulb" },
-    { id:"lamp",  name:"Reading Lamp", icon:"bulb" },
-    { id:"ac",    name:"AC",          icon:"snow" },
-    { id:"tv",    name:"TV",          icon:"tv" },
+    { id:"r1-row1",       name:"R1 - First Row 1",        icon:"bulb", gpio:13, board:"A" },
+    { id:"r1-row2",       name:"R1 - First Row 2",        icon:"bulb", gpio:14, board:"A" },
+    { id:"r1-warm",       name:"R1 - First Warm Light",   icon:"bulb", gpio:15, board:"A" },
+    { id:"r1b-row",       name:"R1 - Second Row",         icon:"bulb", gpio:16, board:"A" },
+    { id:"r1b-warm",      name:"R1 - Second Warm Light",  icon:"bulb", gpio:17, board:"A" },
+    { id:"r2-row1",       name:"R2 - Row 1",              icon:"bulb", gpio:18, board:"A" },
+    { id:"r2-row2",       name:"R2 - Row 2",              icon:"bulb", gpio:19, board:"A" },
   ]},
   { id:"corridor", name:"Corridor", pinX:58.2, pinY:55.1, devices:[
-    { id:"light",  name:"Corridor Light", icon:"bulb" },
-    { id:"night",  name:"Night Light",    icon:"moon" },
-    { id:"plug",   name:"Smart Plug",     icon:"plug" },
-    { id:"motion", name:"Motion Sensor",  icon:"eye" },
+    { id:"row1", name:"Light Row 1", icon:"bulb", gpio:21, board:"A" },
+    { id:"row2", name:"Light Row 2", icon:"bulb", gpio:22, board:"A" },
+    { id:"row3", name:"Light Row 3", icon:"bulb", gpio:23, board:"A" },
   ]},
   { id:"kitchen", name:"Kitchen", pinX:82.1, pinY:55.9, devices:[
-    { id:"light",  name:"Light",        icon:"bulb" },
-    { id:"fan",    name:"Exhaust Fan",  icon:"fan" },
-    { id:"heater", name:"Water Heater", icon:"drop" },
-    { id:"plug",   name:"Socket",       icon:"plug" },
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:15, board:"C" },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:16, board:"C" },
   ]},
   { id:"bathroom", name:"Bathroom", pinX:73.0, pinY:38.2, devices:[
-    { id:"light",  name:"Light",       icon:"bulb" },
-    { id:"fan",    name:"Exhaust Fan", icon:"fan" },
-    { id:"heater", name:"Water Heater",icon:"drop" },
-    { id:"mirror", name:"Mirror Light",icon:"bulb" },
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:13, board:"C" },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:14, board:"C" },
   ]},
   { id:"bedroom1", name:"Bedroom 1", pinX:35.1, pinY:49.0, devices:[
-    { id:"light",   name:"Ceiling Light", icon:"bulb" },
-    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
-    { id:"ac",      name:"AC",            icon:"snow" },
-    { id:"curtain", name:"Curtains",      icon:"curtain" },
+    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:13, board:"B" },
+    { id:"main",  name:"Main Light", icon:"bulb", gpio:14, board:"B" },
+    { id:"spots", name:"Spots",      icon:"bulb", gpio:15, board:"B" },
   ]},
   { id:"bedroom2", name:"Bedroom 2", pinX:33.0, pinY:72.1, devices:[
-    { id:"light",   name:"Ceiling Light", icon:"bulb" },
-    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
-    { id:"ac",      name:"AC",            icon:"snow" },
-    { id:"curtain", name:"Curtains",      icon:"curtain" },
+    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:16, board:"B" },
+    { id:"main",  name:"Main Light", icon:"bulb", gpio:17, board:"B" },
+    { id:"spots", name:"Spots",      icon:"bulb", gpio:18, board:"B" },
   ]},
   { id:"bedroom3", name:"Bedroom 3", pinX:66.0, pinY:79.0, devices:[
-    { id:"light",   name:"Ceiling Light", icon:"bulb" },
-    { id:"lamp",    name:"Bedside Lamp",  icon:"bulb" },
-    { id:"ac",      name:"AC",            icon:"snow" },
-    { id:"curtain", name:"Curtains",      icon:"curtain" },
+    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:19, board:"B" },
+    { id:"main",  name:"Main Light", icon:"bulb", gpio:21, board:"B" },
+    { id:"spots", name:"Spots",      icon:"bulb", gpio:22, board:"B" },
+  ]},
+  { id:"balcony", name:"Balcony", pinX:13.0, pinY:75.0, devices:[
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:2, board:"C" },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:4, board:"C" },
   ]},
 ];
-
+ 
 /* ================= ICONS ================= */
 const ICONS = {
   bulb:   `<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.5.4.8 1 .8 1.7V16h5.6v-.5c0-.7.3-1.3.8-1.7A6 6 0 0 0 12 3z"/>`,
@@ -342,16 +338,16 @@ const ICONS = {
 function iconSvg(name){
   return `<svg viewBox="0 0 24 24">${ICONS[name] || ICONS.bulb}</svg>`;
 }
-
+ 
 /* ================= STATE ================= */
 // key = `${roomId}/${deviceId}` -> true | false | null(unknown) | 'offline'
 const state = {};
 const pendingKeys = new Set();
 let mqttConnected = false;
-
+ 
 function keyOf(roomId, deviceId){ return `${roomId}/${deviceId}`; }
 ROOMS.forEach(r => r.devices.forEach(d => { state[keyOf(r.id,d.id)] = null; }));
-
+ 
 function roomIsActive(room){
   return room.devices.some(d => state[keyOf(room.id, d.id)] === true);
 }
@@ -366,16 +362,16 @@ function updateSummaryUI(){
   dotEl.classList.toggle('on', n > 0);
   document.getElementById('summary').classList.toggle('on', n > 0);
 }
-
+ 
 /* ================= MQTT ================= */
 const connDot = document.getElementById('connDot');
 const connText = document.getElementById('connText');
-
+ 
 const client = mqtt.connect(`wss://${MQTT_HOST}:${MQTT_PORT}/mqtt`, {
   clientId: 'web-' + UNIQUE_ID + '-' + Math.random().toString(16).slice(2),
   reconnectPeriod: 3000,
 });
-
+ 
 client.on('connect', () => {
   mqttConnected = true;
   connDot.className = 'dot online';
@@ -404,7 +400,7 @@ client.on('message', (topic, payload) => {
   pendingKeys.delete(key);
   refresh();
 });
-
+ 
 function toggleDevice(roomId, deviceId){
   const key = keyOf(roomId, deviceId);
   if (pendingKeys.has(key)) return;
@@ -415,16 +411,16 @@ function toggleDevice(roomId, deviceId){
   refresh();
   setTimeout(() => { if (pendingKeys.has(key)) { pendingKeys.delete(key); refresh(); } }, 4000);
 }
-
+ 
 /* ================= ROUTER / RENDER ================= */
 const app = document.getElementById('app');
-
+ 
 function parseHash(){
   const h = location.hash.replace(/^#\/?/, '');
   if (h.startsWith('room/')) return { view:'room', roomId: h.slice(5) };
   return { view:'home' };
 }
-
+ 
 function doRender(){
   const route = parseHash();
   if (route.view === 'room') {
@@ -434,10 +430,10 @@ function doRender(){
   renderHome();
   updateSummaryUI();
 }
-
+ 
 // instant re-render for state-only updates (mqtt messages, toggles) — no page transition
 function refresh(){ doRender(); }
-
+ 
 // animated re-render for actual navigation (home <-> room)
 function navigate(){
   app.classList.add('leaving');
@@ -453,7 +449,7 @@ function navigate(){
     });
   }, 220);
 }
-
+ 
 function renderHome(){
   app.innerHTML = `
     <div class="home-wrap">
@@ -482,8 +478,8 @@ function renderHome(){
     btn.addEventListener('click', () => { location.hash = `#/room/${btn.dataset.room}`; });
   });
 }
-
-
+ 
+ 
 function renderRoom(room){
   app.innerHTML = `
     <div class="room-wrap">
@@ -508,7 +504,7 @@ function renderRoom(room){
     if (el) el.addEventListener('click', () => toggleDevice(room.id, d.id));
   });
 }
-
+ 
 function deviceCardHtml(roomId, device){
   const key = keyOf(roomId, device.id);
   const val = state[key];
@@ -516,18 +512,18 @@ function deviceCardHtml(roomId, device){
   const isOn = val === true;
   const isOffline = val === 'offline';
   const isUnknown = val === null;
-
+ 
   let statusLabel, cls = 'device-card';
   if (isOffline) { statusLabel = 'Not connected yet'; cls += ' offline'; }
   else if (isUnknown) { statusLabel = 'Checking status...'; cls += ' offline'; }
   else if (isPending) { statusLabel = 'Sending command...'; cls += ' pending'; }
   else if (isOn) { statusLabel = 'On'; cls += ' on'; }
   else { statusLabel = 'Off'; }
-
+ 
   const gpioBadge = device.gpio !== undefined
-    ? `<span class="gpio-tag">GPIO ${device.gpio}</span>`
+    ? `<span class="gpio-tag">ESP32-${device.board} · GPIO${device.gpio}</span>`
     : '';
-
+ 
   return `
     <div class="${cls}" id="card-${roomId}-${device.id}">
       <div class="device-icon-shell">${iconSvg(device.icon)}</div>
@@ -539,7 +535,7 @@ function deviceCardHtml(roomId, device){
     </div>
   `;
 }
-
+ 
 window.addEventListener('hashchange', navigate);
 doRender();
 </script>
