@@ -276,48 +276,34 @@ const BASE_TOPIC = `home/${UNIQUE_ID}`;
 // pinX/pinY are percentages measured from the top-left of floorplan.png
 const ROOMS = [
   { id:"main-entry", name:"Main Entry", pinX:56.1, pinY:20.4, devices:[
-    { id:"entry-lamp", name:"Entry Lamp", icon:"bulb", gpio:26, board:"A" },
-  ]},
-  { id:"reception", name:"Reception", pinX:37.1, pinY:32.8, devices:[
-    { id:"r1-row1",       name:"R1 - First Row 1",        icon:"bulb", gpio:13, board:"A" },
-    { id:"r1-row2",       name:"R1 - First Row 2",        icon:"bulb", gpio:14, board:"A" },
-    { id:"r1-warm",       name:"R1 - First Warm Light",   icon:"bulb", gpio:15, board:"A" },
-    { id:"r1b-row",       name:"R1 - Second Row",         icon:"bulb", gpio:16, board:"A" },
-    { id:"r1b-warm",      name:"R1 - Second Warm Light",  icon:"bulb", gpio:17, board:"A" },
-    { id:"r2-row1",       name:"R2 - Row 1",              icon:"bulb", gpio:18, board:"A" },
-    { id:"r2-row2",       name:"R2 - Row 2",              icon:"bulb", gpio:19, board:"A" },
-  ]},
-  { id:"corridor", name:"Corridor", pinX:58.2, pinY:55.1, devices:[
-    { id:"row1", name:"Light Row 1", icon:"bulb", gpio:21, board:"A" },
-    { id:"row2", name:"Light Row 2", icon:"bulb", gpio:22, board:"A" },
-    { id:"row3", name:"Light Row 3", icon:"bulb", gpio:23, board:"A" },
-  ]},
-  { id:"kitchen", name:"Kitchen", pinX:82.1, pinY:55.9, devices:[
-    { id:"light1", name:"Light 1", icon:"bulb", gpio:15, board:"C" },
-    { id:"light2", name:"Light 2", icon:"bulb", gpio:16, board:"C" },
-  ]},
-  { id:"bathroom", name:"Bathroom", pinX:73.0, pinY:38.2, devices:[
-    { id:"light1", name:"Light 1", icon:"bulb", gpio:13, board:"C" },
-    { id:"light2", name:"Light 2", icon:"bulb", gpio:14, board:"C" },
-  ]},
-  { id:"bedroom1", name:"Bedroom 1", pinX:35.1, pinY:49.0, devices:[
-    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:13, board:"B" },
-    { id:"main",  name:"Main Light", icon:"bulb", gpio:14, board:"B" },
-    { id:"spots", name:"Spots",      icon:"bulb", gpio:15, board:"B" },
-  ]},
-  { id:"bedroom2", name:"Bedroom 2", pinX:33.0, pinY:72.1, devices:[
-    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:16, board:"B" },
-    { id:"main",  name:"Main Light", icon:"bulb", gpio:17, board:"B" },
-    { id:"spots", name:"Spots",      icon:"bulb", gpio:18, board:"B" },
-  ]},
-  { id:"bedroom3", name:"Bedroom 3", pinX:66.0, pinY:79.0, devices:[
-    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:19, board:"B" },
-    { id:"main",  name:"Main Light", icon:"bulb", gpio:21, board:"B" },
-    { id:"spots", name:"Spots",      icon:"bulb", gpio:22, board:"B" },
+    { id:"entry-lamp", name:"Entry Lamp", icon:"bulb", gpio:26 },
   ]},
   { id:"balcony", name:"Balcony", pinX:13.0, pinY:75.0, devices:[
-    { id:"light1", name:"Light 1", icon:"bulb", gpio:2, board:"C" },
-    { id:"light2", name:"Light 2", icon:"bulb", gpio:4, board:"C" },
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:2 },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:4 },
+  ]},
+  { id:"bathroom", name:"Bathroom", pinX:73.0, pinY:38.2, devices:[
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:13 },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:14 },
+  ]},
+  { id:"kitchen", name:"Kitchen", pinX:82.1, pinY:55.9, devices:[
+    { id:"light1", name:"Light 1", icon:"bulb", gpio:16 },
+    { id:"light2", name:"Light 2", icon:"bulb", gpio:17 },
+  ]},
+  { id:"corridor", name:"Corridor", pinX:58.2, pinY:55.1, devices:[
+    { id:"row1", name:"Light Row 1", icon:"bulb", gpio:18 },
+    { id:"row2", name:"Light Row 2", icon:"bulb", gpio:19 },
+    { id:"row3", name:"Light Row 3", icon:"bulb", gpio:21 },
+  ]},
+  { id:"bedroom1", name:"Bedroom 1", pinX:35.1, pinY:49.0, devices:[
+    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:22 },
+    { id:"main",  name:"Main Light", icon:"bulb", gpio:23 },
+    { id:"spots", name:"Spots",      icon:"bulb", gpio:25 },
+  ]},
+  { id:"bedroom2", name:"Bedroom 2", pinX:33.0, pinY:72.1, devices:[
+    { id:"warm",  name:"Warm Light", icon:"bulb", gpio:27 },
+    { id:"main",  name:"Main Light", icon:"bulb", gpio:32 },
+    { id:"spots", name:"Spots",      icon:"bulb", gpio:33 },
   ]},
 ];
  
@@ -521,7 +507,7 @@ function deviceCardHtml(roomId, device){
   else { statusLabel = 'Off'; }
  
   const gpioBadge = device.gpio !== undefined
-    ? `<span class="gpio-tag">ESP32-${device.board} · GPIO${device.gpio}</span>`
+    ? `<span class="gpio-tag">GPIO${device.gpio}</span>`
     : '';
  
   return `
