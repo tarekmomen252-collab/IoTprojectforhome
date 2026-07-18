@@ -80,6 +80,55 @@
   #app.leaving{ opacity:0; transform:translateY(8px); }
   #app.entering{ opacity:0; transform:translateY(-8px); transition:none; }
  
+  /* ---------- STATUS PANEL (side drawer) ---------- */
+  .status-tab{
+    position:fixed; top:50%; right:0; transform:translateY(-50%);
+    z-index:50;
+    background: var(--panel);
+    border:1px solid var(--line); border-right:none;
+    border-radius:10px 0 0 10px;
+    color:var(--text-dim);
+    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.08em;
+    padding:14px 7px;
+    writing-mode: vertical-rl;
+    cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .status-tab .tab-dot{ width:6px; height:6px; border-radius:50%; background:var(--slate); }
+  .status-tab .tab-dot.on{ background:var(--porch); box-shadow:0 0 6px var(--porch); }
+ 
+  .status-panel{
+    position:fixed; top:0; right:0; bottom:0; z-index:49;
+    width:230px;
+    background: var(--night-2);
+    border-left:1px solid var(--line);
+    box-shadow: -20px 0 40px -20px rgba(0,0,0,0.5);
+    transform: translateX(100%);
+    transition: transform .3s ease;
+    padding:70px 16px 20px;
+    overflow-y:auto;
+  }
+  .status-panel.open{ transform: translateX(0); }
+ 
+  .status-panel-head{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14px;
+    margin-bottom:16px; color:var(--text);
+  }
+  .status-room{ margin-bottom:14px; }
+  .status-room-name{
+    font-size:10px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-faint); margin-bottom:6px;
+  }
+  .status-row{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--text-dim);
+    padding:3px 0;
+  }
+  .status-row.is-on{ color:var(--porch-soft); }
+  .status-dot{ width:6px; height:6px; border-radius:50%; background:var(--slate); flex-shrink:0; }
+  .status-dot.on{ background:var(--porch); box-shadow:0 0 6px rgba(245,166,35,0.8); }
+  .status-dot.offline{ background:transparent; border:1px solid var(--text-faint); }
+ 
   /* ---------- HOME VIEW ---------- */
   .home-wrap{
     max-width:920px; margin:0 auto; padding:0 20px 60px;
@@ -264,6 +313,14 @@
  
 <div id="app"></div>
  
+<button class="status-tab" id="statusTab">
+  <span class="tab-dot" id="tabDot"></span> STATUS
+</button>
+<aside class="status-panel" id="statusPanel">
+  <div class="status-panel-head">Live Status</div>
+  <div id="statusList"></div>
+</aside>
+ 
 <script>
 /* ================= CONFIG ================= */
 // Must match the UNIQUE_ID used on your ESP32 sketch(es)
@@ -342,11 +399,33 @@ function updateSummaryUI(){
   const knownAny = Object.values(state).some(v => v === true || v === false);
   const textEl = document.getElementById('summaryText');
   const dotEl = document.getElementById('summaryDot');
-  if (!textEl) return;
-  if (!knownAny) { textEl.textContent = 'Checking devices...'; dotEl.classList.remove('on'); return; }
-  textEl.textContent = n === 0 ? 'Everything is off' : `${n} device${n === 1 ? '' : 's'} on now`;
-  dotEl.classList.toggle('on', n > 0);
-  document.getElementById('summary').classList.toggle('on', n > 0);
+  if (textEl) {
+    if (!knownAny) { textEl.textContent = 'Checking devices...'; dotEl.classList.remove('on'); }
+    else {
+      textEl.textContent = n === 0 ? 'Everything is off' : `${n} device${n === 1 ? '' : 's'} on now`;
+      dotEl.classList.toggle('on', n > 0);
+      document.getElementById('summary').classList.toggle('on', n > 0);
+    }
+  }
+ 
+  const tabDot = document.getElementById('tabDot');
+  if (tabDot) tabDot.classList.toggle('on', n > 0);
+ 
+  const listEl = document.getElementById('statusList');
+  if (listEl) {
+    listEl.innerHTML = ROOMS.map(room => `
+      <div class="status-room">
+        <div class="status-room-name">${room.name}</div>
+        ${room.devices.map(d => {
+          const val = state[keyOf(room.id, d.id)];
+          const isOn = val === true;
+          const isOffline = val === 'offline' || val === null;
+          const dotClass = isOn ? 'on' : (isOffline ? 'offline' : '');
+          return `<div class="status-row ${isOn ? 'is-on' : ''}"><span class="status-dot ${dotClass}"></span>${d.name}</div>`;
+        }).join('')}
+      </div>
+    `).join('');
+  }
 }
  
 /* ================= MQTT ================= */
@@ -524,6 +603,11 @@ function deviceCardHtml(roomId, device){
  
 window.addEventListener('hashchange', navigate);
 doRender();
+ 
+document.getElementById('statusTab').addEventListener('click', () => {
+  document.getElementById('statusPanel').classList.toggle('open');
+});
 </script>
 </body>
 </html>
+ 
